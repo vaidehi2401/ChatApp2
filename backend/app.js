@@ -6,7 +6,13 @@ const userRoutes = require('./routes/userRoutes');
 const groupRoutes = require('./routes/groupRoutes');
 const cors = require('cors');
 const sequelize = require('./util/database');
-
+const archievedModel = require('./models/archievedModel')
+const userModel = require('./models/userModel')
+const userGroupModel = require('./models/userGroupModel')
+const messagesModel = require('./models/messageModel')
+const groupModel = require('./models/groupModel')
+const cron = require('node-cron');
+const archiveOldMessages = require('./jobs/archiveMessages.');
 const app = express();
 const server = http.createServer(app);
 
@@ -20,7 +26,7 @@ const io = socketIo(server, {
 
 // Now you can set io on app
 app.set('io', io);
-
+cron.schedule('0 2 * * *', archiveOldMessages);
 app.use(cors({
   origin: "*"
 }));
@@ -50,7 +56,7 @@ app.use('/users', userRoutes);
 app.use('/group', groupRoutes);
 
 // Database sync and server start
-sequelize.sync()
+sequelize.sync({force:true})
   .then(() => {
     const PORT = process.env.PORT_NO || 3004; // Default port if not specified
     server.listen(PORT, () => {
